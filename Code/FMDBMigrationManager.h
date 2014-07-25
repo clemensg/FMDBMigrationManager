@@ -77,13 +77,13 @@
  @abstract Returns the current version of the database managed by the receiver or `0` if the
  migrations table is not present.
  */
-@property (nonatomic, readonly) uint64_t currentVersion;
+@property (nonatomic, readonly) int64_t currentVersion;
 
 /**
  @abstract Returns the origin version of the database managed by the receiver or `0` if the
  migrations table is not present.
  */
-@property (nonatomic, readonly) uint64_t originVersion;
+@property (nonatomic, readonly) int64_t originVersion;
 
 ///---------------------------
 /// @name Accessing Migrations
@@ -116,7 +116,7 @@
  @param version The version of the desired migration.
  @return A migration with the specified version or `nil` if none could be found.
  */
-- (id<FMDBMigrating>)migrationForVersion:(uint64_t)version;
+- (id<FMDBMigrating>)migrationForVersion:(int64_t)version;
 
 /**
  @abstract Returns a migration object with a given name or `nil` if none could be found.
@@ -160,7 +160,7 @@
  @param error A pointer to an error object that is set upon failure to complete the migrations.
  @return `YES` if migration was successful, else `NO`.
  */
-- (BOOL)migrateDatabaseToVersion:(uint64_t)version progress:(void (^)(NSProgress *progress))progressBlock error:(NSError **)error;
+- (BOOL)migrateDatabaseToVersion:(int64_t)version progress:(void (^)(NSProgress *progress))progressBlock error:(NSError **)error;
 
 @end
 
@@ -180,14 +180,14 @@
 /**
  @abstract The name of the migration.
  */
-@property (nonatomic, readonly) NSString *name;
+@property (nonatomic, copy, readonly) NSString *name;
 
 /**
  @abstract The numeric version of the migration. 
  @discussion While monotonically incremented versions are fully supported, it is recommended that to use a timestamp format such as
  201406063106474. Timestamps avoid unnecessary churn in a codebase that is heavily branched.
  */
-@property (nonatomic, readonly) uint64_t version;
+@property (nonatomic, readonly) int64_t version;
 
 ///--------------------------
 /// @name Migrating Databases
@@ -226,12 +226,12 @@
 /**
  @abstract The path to the SQL migration file on disk.
  */
-@property (nonatomic, readonly) NSString *path;
+@property (nonatomic, copy, readonly) NSString *path;
 
 /**
  @abstract A convenience accessor for retrieving the SQL from the receiver's path.
  */
-@property (nonatomic, readonly) NSString *SQL;
+@property (nonatomic, copy, readonly) NSString *SQL;
 
 @end
 

@@ -67,7 +67,7 @@ static FMDatabase *FMDatabaseWithSchemaMigrationsTable()
     return @"My Object Migration";
 }
 
-- (uint64_t)version
+- (int64_t)version
 {
     return 201499000000000;
 }
@@ -307,7 +307,7 @@ static FMDatabase *FMDatabaseWithSchemaMigrationsTable()
     FMDBMigrationManager *manager = [FMDBMigrationManager managerWithDatabaseAtPath:FMDBRandomDatabasePath() migrationsBundle:FMDBMigrationsTestBundle()];
     expect(manager.hasMigrationsTable).to.beFalsy();
     NSError *error = nil;
-    BOOL success = [manager migrateDatabaseToVersion:UINT64_MAX progress:nil error:&error];
+    BOOL success = [manager migrateDatabaseToVersion:INT64_MAX progress:nil error:&error];
     expect(success).to.beTruthy();
     expect(error).to.beNil();
     expect(manager.hasMigrationsTable).to.beTruthy();
@@ -320,7 +320,7 @@ static FMDatabase *FMDatabaseWithSchemaMigrationsTable()
     FMDBMigrationManager *manager = [FMDBMigrationManager managerWithDatabase:database migrationsBundle:FMDBMigrationsTestBundle()];
     expect(manager.hasMigrationsTable).to.beFalsy();
     NSError *error = nil;
-    BOOL success = [manager migrateDatabaseToVersion:UINT64_MAX progress:nil error:&error];
+    BOOL success = [manager migrateDatabaseToVersion:INT64_MAX progress:nil error:&error];
     expect(success).to.beTruthy();
     expect(error).to.beNil();
     expect(manager.hasMigrationsTable).to.beTruthy();
@@ -344,7 +344,7 @@ static FMDatabase *FMDatabaseWithSchemaMigrationsTable()
     FMDBMigrationManager *manager = [FMDBMigrationManager managerWithDatabaseAtPath:FMDBRandomDatabasePath() migrationsBundle:FMDBMigrationsTestBundle()];
     expect(manager.hasMigrationsTable).to.beFalsy();
     NSError *error = nil;
-    BOOL success = [manager migrateDatabaseToVersion:UINT64_MAX progress:^(NSProgress *progress) {
+    BOOL success = [manager migrateDatabaseToVersion:INT64_MAX progress:^(NSProgress *progress) {
         if ([progress.userInfo[@"version"] isEqualToNumber:@201406063548463]) {
             [progress cancel];
         }

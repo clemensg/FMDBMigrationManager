@@ -129,7 +129,7 @@ Objective-C based migrations can be implemented by creating a new class that con
     return @"My Object Migration";
 }
 
-- (uint64_t)version
+- (int64_t)version
 {
     return 201499000000000;
 }
@@ -150,7 +150,7 @@ When classes conforming to the `FMDBMigrating` protocol are added to the project
 ```objc
 FMDBMigrationManager *manager = [FMDBMigrationManager managerWithDatabaseAtPath:@"path/to/your/DB.sqlite" migrationsBundle:[NSBundle mainBundle]];
 NSError *error = nil;
-BOOL success = [manager migrateDatabaseToVersion:UINT64_MAX progress:nil error:&error];
+BOOL success = [manager migrateDatabaseToVersion:INT64_MAX progress:nil error:&error];
 ```
 
 ### Inspecting Schema State

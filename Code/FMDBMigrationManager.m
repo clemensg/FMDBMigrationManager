@@ -128,27 +128,27 @@ static NSArray *FMDBClassesConformingToProtocol(Protocol *protocol)
     return success;
 }
 
-- (uint64_t)currentVersion
+- (int64_t)currentVersion
 {
     if (!self.hasMigrationsTable) return 0;
     
-    uint64_t version = 0;
+    int64_t version = 0;
     FMResultSet *resultSet = [self.database executeQuery:@"SELECT MAX(version) FROM schema_migrations"];
     if ([resultSet next]) {
-        version = [resultSet unsignedLongLongIntForColumnIndex:0];
+        version = [resultSet longLongIntForColumnIndex:0];
     }
     [resultSet close];
-    return version;;
+    return version;
 }
 
-- (uint64_t)originVersion
+- (int64_t)originVersion
 {
     if (!self.hasMigrationsTable) return 0;
     
-    uint64_t version = 0;
+    int64_t version = 0;
     FMResultSet *resultSet = [self.database executeQuery:@"SELECT MIN(version) FROM schema_migrations"];
     if ([resultSet next]) {
-        version = [resultSet unsignedLongLongIntForColumnIndex:0];
+        version = [resultSet longLongIntForColumnIndex:0];
     }
     [resultSet close];
     return version;
@@ -161,7 +161,7 @@ static NSArray *FMDBClassesConformingToProtocol(Protocol *protocol)
     NSMutableArray *versions = [NSMutableArray new];
     FMResultSet *resultSet = [self.database executeQuery:@"SELECT version FROM schema_migrations"];
     while ([resultSet next]) {
-        uint64_t version = [resultSet unsignedLongLongIntForColumnIndex:0];
+        int64_t version = [resultSet longLongIntForColumnIndex:0];
         [versions addObject:@(version)];
     }
     [resultSet close];
@@ -206,7 +206,7 @@ static NSArray *FMDBClassesConformingToProtocol(Protocol *protocol)
     return _migrations;
 }
 
-- (id<FMDBMigrating>)migrationForVersion:(uint64_t)version
+- (id<FMDBMigrating>)migrationForVersion:(int64_t)version
 {
     for (id<FMDBMigrating>migration in [self migrations]) {
         if (migration.version == version) return migration;
@@ -222,15 +222,19 @@ static NSArray *FMDBClassesConformingToProtocol(Protocol *protocol)
     return nil;
 }
 
-- (BOOL)migrateDatabaseToVersion:(uint64_t)version progress:(void (^)(NSProgress *progress))progressBlock error:(NSError **)error
+- (BOOL)migrateDatabaseToVersion:(int64_t)version progress:(void (^)(NSProgress *progress))progressBlock error:(NSError **)error
 {
+    // Backwards-compatibility
+    if((uint64_t)version == UINT64_MAX)
+        version=INT64_MAX;
+
     BOOL success = YES;
     NSArray *pendingVersions = self.pendingVersions;
     NSProgress *progress = [NSProgress progressWithTotalUnitCount:[pendingVersions count]];
     for (NSNumber *migrationVersionNumber in pendingVersions) {
         [self.database beginTransaction];
         
-        uint64_t migrationVersion = [migrationVersionNumber unsignedLongLongValue];
+        int64_t migrationVersion = [migrationVersionNumber longLongValue];
         if (migrationVersion > version) break;
         id<FMDBMigrating> migration = [self migrationForVersion:migrationVersion];
         success = [migration migrateDatabase:self.database error:error];
@@ -267,7 +271,7 @@ static NSArray *FMDBClassesConformingToProtocol(Protocol *protocol)
 
 @end
 
-static BOOL FMDBMigrationScanMetadataFromPath(NSString *path, uint64_t *version, NSString **name)
+static BOOL FMDBMigrationScanMetadataFromPath(NSString *path, int64_t *version, NSString **name)
 {
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:FMDBMigrationFilenameRegexString options:0 error:&error];
@@ -280,15 +284,15 @@ static BOOL FMDBMigrationScanMetadataFromPath(NSString *path, uint64_t *version,
     if ([result numberOfRanges] != 3) return NO;
     NSString *versionString = [migrationName substringWithRange:[result rangeAtIndex:1]];
     NSScanner *scanner = [NSScanner scannerWithString:versionString];
-    [scanner scanUnsignedLongLong:version];
+    [scanner scanLongLong:version];
     NSRange range = [result rangeAtIndex:2];
     *name = (range.length) ? [migrationName substringWithRange:[result rangeAtIndex:2]] : nil;
     return YES;
 }
 
 @interface FMDBFileMigration ()
-@property (nonatomic, readwrite) NSString *name;
-@property (nonatomic, readwrite) uint64_t version;
+@property (nonatomic, copy, readwrite) NSString *name;
+@property (nonatomic, readwrite) int64_t version;
 @end
 
 @implementation FMDBFileMigration
@@ -301,7 +305,7 @@ static BOOL FMDBMigrationScanMetadataFromPath(NSString *path, uint64_t *version,
 - (id)initWithPath:(NSString *)path
 {
     NSString *name;
-    uint64_t version;
+    int64_t version;
     if (!FMDBMigrationScanMetadataFromPath(path, &version, &name)) return nil;
     
     self = [super init];
